@@ -43,6 +43,47 @@
 			};
 		};
 	};
+
+	battery: battery {
+		compatible = "simple-battery";
+		device-chemistry = "lithium-ion";
+		voltage-min-design-microvolt = <6000000>;
+		voltage-max-design-microvolt = <8400000>;
+		/*
+		 * Open-circuit voltage -> capacity, from the vendor u-boot
+		 * "battvoltlist" (2S Li-ion, 0..100 % in 10 % steps).  A board
+		 * with a different pack can override this without a driver change.
+		 * There is no thermistor, so a single nominal-temperature table.
+		 */
+		ocv-capacity-celsius = <20>;
+		ocv-capacity-table-0 = <8275000 100>, <7975000 90>, <7905000 80>,
+				       <7825000 70>, <7725000 60>, <7625000 50>,
+				       <7555000 40>, <7485000 30>, <7375000 20>,
+				       <7195000 10>, <6445000 0>;
+	};
+
+	battery-meter {
+		compatible = "wm,wm8505-battery";
+		monitored-battery = <&battery>;
+		/* EXTGPIO4: RC-slope battery-voltage sense line. */
+		sense-gpios = <&pinctrl 4 GPIO_ACTIVE_HIGH>;
+		/*
+		 * Battery-low / under-voltage warning, bench-identified as
+		 * gpiochip0 line 227 (bank7): rests high when OK, goes low below
+		 * ~6.8 V (matches the vendor "LowVoltConfig 12" pin), hence
+		 * active-low.  This shares the pin the SPI-NOR would use for its
+		 * clock, but that flash is boot-only and idle under Linux.
+		 */
+		low-bat-gpios = <&pinctrl 227 GPIO_ACTIVE_LOW>;
+		/* AC-adapter present (bench-confirmed active-high). */
+		ac-detect-gpios = <&pinctrl 0 GPIO_ACTIVE_HIGH>;
+		/*
+		 * Charger STAT (charging vs. charge-complete).  Polarity is the
+		 * vendor board-config default and still needs bench
+		 * confirmation; flip if the reported status is inverted.
+		 */
+		charge-status-gpios = <&pinctrl 1 GPIO_ACTIVE_HIGH>;
+	};
 };
 
 &ac97 {

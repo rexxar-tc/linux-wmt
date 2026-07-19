@@ -1,0 +1,74 @@
+# SPDX-License-Identifier: GPL-2.0
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/power/supply/wm8505-battery.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: WonderMedia WM8505 GPIO RC-slope battery and charger meter
+
+maintainers:
+  - Brant Martin <brant@brantmartin.com>
+
+description: >
+  WonderMedia WM8505 netbooks (such as the Sylvania SYNET07526) have no fuel
+  gauge, no battery-monitor IC and no on-SoC ADC. The battery voltage is instead
+  sensed with an RC-slope "poor man's ADC" on a GPIO. The line is driven low to
+  drain a capacitor, then released, and the time taken to charge back up to the
+  logic threshold is inversely related to the battery voltage. Optional GPIOs
+  report the under-voltage-lockout state and the AC adapter / charger status.
+
+properties:
+  compatible:
+    const: wm,wm8505-battery
+
+  monitored-battery:
+    $ref: /schemas/types.yaml#/definitions/phandle
+    description:
+      Phandle to a "simple-battery" node describing the pack (an
+      ocv-capacity-table and the design voltages), used for the capacity and
+      voltage-*-design properties. Optional; without it those properties are
+      unavailable but voltage and status still work.
+
+  sense-gpios:
+    maxItems: 1
+    description:
+      The RC-slope battery-voltage sense line. Driven low to discharge, then
+      released and timed to logic-high.
+
+  low-bat-gpios:
+    maxItems: 1
+    description:
+      Battery-low / under-voltage warning input. Asserted (active-low on the
+      reference board, a comparator output that rests high and pulls low) when
+      the pack drops below roughly 6.8 V.
+
+  ac-detect-gpios:
+    maxItems: 1
+    description:
+      AC-adapter-present input. When supplied, a mains power supply exposing
+      the online state is registered.
+
+  charge-status-gpios:
+    maxItems: 1
+    description:
+      Charger status input, only meaningful while the adapter is present -
+      asserted while charging, deasserted once charging is complete.
+
+required:
+  - compatible
+  - sense-gpios
+
+additionalProperties: false
+
+examples:
+  - |
+    #include <dt-bindings/gpio/gpio.h>
+
+    battery-meter {
+        compatible = "wm,wm8505-battery";
+        monitored-battery = <&battery>;
+        sense-gpios = <&pinctrl 4 GPIO_ACTIVE_HIGH>;
+        low-bat-gpios = <&pinctrl 227 GPIO_ACTIVE_LOW>;
+        ac-detect-gpios = <&pinctrl 0 GPIO_ACTIVE_HIGH>;
+        charge-status-gpios = <&pinctrl 1 GPIO_ACTIVE_HIGH>;
+    };

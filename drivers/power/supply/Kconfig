@@ -42,6 +42,19 @@ config GENERIC_ADC_BATTERY
 	  Say Y here to enable support for the generic battery driver
 	  which uses IIO framework to read adc.
 
+config BATTERY_WM8505
+	tristate "WonderMedia WM8505 GPIO RC-slope battery meter"
+	depends on ARCH_WM8505 || COMPILE_TEST
+	depends on GPIOLIB
+	help
+	  Say Y here to enable the battery meter found on WonderMedia WM8505
+	  netbooks such as the Sylvania SYNET07526.  These boards have no fuel
+	  gauge or ADC; the battery voltage is sensed via an RC-slope charge-time
+	  measurement on a GPIO and reported through the power supply class.
+
+	  To compile this driver as a module, choose M here: the module will be
+	  called wm8505-battery.
+
 config IP5XXX_POWER
 	tristate "Injoinic IP5xxx power bank IC driver"
 	depends on I2C
